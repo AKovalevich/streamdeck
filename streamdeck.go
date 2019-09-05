@@ -113,8 +113,7 @@ type Page interface {
 // the optional serial number of the Device. In the examples folder there is
 // a small program which enumerates all available Stream Decks. If no serial number
 // is supplied, the first StreamDeck found will be selected.
-func NewStreamDeck(serial ...string) (*StreamDeck, error) {
-
+func NewStreamDeck(stop chan bool, serial ...string) (*StreamDeck, error) {
 	if len(serial) > 1 {
 		return nil, fmt.Errorf("only <= 1 serial numbers must be provided")
 	}
@@ -156,7 +155,7 @@ func NewStreamDeck(serial ...string) (*StreamDeck, error) {
 
 	sd.ClearAllBtns()
 
-	go sd.read()
+	go sd.read(stop)
 
 	return sd, nil
 }
@@ -171,30 +170,38 @@ func (sd *StreamDeck) SetBtnEventCb(ev BtnEvent) {
 
 // Read will listen in a for loop for incoming messages from the Stream Deck.
 // It is typcially executed in a dedicated go routine.
-func (sd *StreamDeck) read() {
-
+func (sd *StreamDeck) read(stop chan bool) {
 	for {
-		data := make([]byte, 16)
-		_, err := sd.device.Read(data)
-		if err != nil {
-			fmt.Println(err)
-		}
+		select {
+		case <-stop:
+			err := sd.Close()
+			if err != nil {
+				fmt.Println(err)
+			}
+			return
+		default:
+			data := make([]byte, 16)
+			_, err := sd.device.Read(data)
+			if err != nil {
+				fmt.Println(err)
+			}
 
-		data = data[1:] // strip off the first byte; usage unknown, but it is always '\x01'
+			data = data[1:] // strip off the first byte; usage unknown, but it is always '\x01'
 
-		sd.Lock()
-		// we have to iterate over all 15 buttons and check if the state
-		// has changed. If it has changed, execute the callback.
-		for i, b := range data {
-			if sd.btnState[i] != itob(int(b)) {
-				sd.btnState[i] = itob(int(b))
-				if sd.btnEventCb != nil {
-					btnState := sd.btnState[i]
-					go sd.btnEventCb(i, btnState)
+			sd.Lock()
+			// we have to iterate over all 15 buttons and check if the state
+			// has changed. If it has changed, execute the callback.
+			for i, b := range data {
+				if sd.btnState[i] != itob(int(b)) {
+					sd.btnState[i] = itob(int(b))
+					if sd.btnEventCb != nil {
+						btnState := sd.btnState[i]
+						go sd.btnEventCb(i, btnState)
+					}
 				}
 			}
+			sd.Unlock()
 		}
-		sd.Unlock()
 	}
 }
 
@@ -202,7 +209,7 @@ func (sd *StreamDeck) read() {
 func (sd *StreamDeck) Close() error {
 	sd.Lock()
 	sd.Unlock()
-	return sd.Close()
+	return sd.device.Close()
 }
 
 // ClearBtn fills a particular key with the color black
