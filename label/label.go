@@ -7,7 +7,7 @@ import (
 	"image/draw"
 	"log"
 
-	sd "github.com/dh1tw/streamdeck"
+	sd "github.com/AKovalevich/streamdeck"
 	"github.com/gobuffalo/packr/v2"
 	"github.com/golang/freetype"
 	"github.com/golang/freetype/truetype"

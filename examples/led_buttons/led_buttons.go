@@ -6,8 +6,8 @@ import (
 	"os"
 	"os/signal"
 
-	sdeck "github.com/dh1tw/streamdeck"
-	"github.com/dh1tw/streamdeck/ledbutton"
+	sdeck "github.com/AKovalevich/streamdeck"
+	"github.com/AKovalevich/streamdeck/ledbutton"
 )
 
 // This example shows how to use the 'streamdeck/LedButton‘. It will

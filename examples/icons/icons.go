@@ -8,7 +8,7 @@ import (
 	"os"
 	"os/signal"
 
-	sdeck "github.com/dh1tw/streamdeck"
+	sdeck "github.com/AKovalevich/streamdeck"
 	"github.com/gobuffalo/packr/v2"
 )
 

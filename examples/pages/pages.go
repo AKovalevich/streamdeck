@@ -7,9 +7,9 @@ import (
 	"os/signal"
 	"strconv"
 
-	sdeck "github.com/dh1tw/streamdeck"
-	"github.com/dh1tw/streamdeck/label"
-	ledbutton "github.com/dh1tw/streamdeck/ledbutton"
+	sdeck "github.com/AKovalevich/streamdeck"
+	"github.com/AKovalevich/streamdeck/label"
+	ledbutton "github.com/AKovalevich/streamdeck/ledbutton"
 )
 
 func main() {

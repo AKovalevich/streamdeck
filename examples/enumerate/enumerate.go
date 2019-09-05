@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/dh1tw/hid"
-	sd "github.com/dh1tw/streamdeck"
+	sd "github.com/AKovalevich/streamdeck"
 )
 
 // This program enumerates all instances of Elgato Stream Deck connected

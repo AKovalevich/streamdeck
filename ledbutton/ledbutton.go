@@ -10,7 +10,7 @@ import (
 
 	"github.com/gobuffalo/packr/v2"
 
-	sd "github.com/dh1tw/streamdeck"
+	sd "github.com/AKovalevich/streamdeck"
 	"github.com/golang/freetype"
 	"github.com/golang/freetype/truetype"
 )

@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"time"
 
-	sdeck "github.com/dh1tw/streamdeck"
-	label "github.com/dh1tw/streamdeck/label"
+	sdeck "github.com/AKovalevich/streamdeck"
+	label "github.com/AKovalevich/streamdeck/label"
 )
 
 // This example will instanciate 15 labels on the streamdeck. Each Label
