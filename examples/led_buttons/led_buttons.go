@@ -2,12 +2,9 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"os"
-	"os/signal"
-
 	sdeck "github.com/AKovalevich/streamdeck"
 	"github.com/AKovalevich/streamdeck/ledbutton"
+	"log"
 )
 
 // This example shows how to use the 'streamdeck/LedButton‘. It will
@@ -15,8 +12,7 @@ import (
 // which can be activated / deactivated with a button press.
 
 func main() {
-
-	sd, err := sdeck.NewStreamDeck()
+	sd, err := sdeck.NewStreamDeck(nil)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -67,8 +63,6 @@ func main() {
 	}
 	sd.SetBtnEventCb(btnChangedCb)
 
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-
-	<-c
+	stop := make(chan bool)
+	sd.Serve(stop)
 }

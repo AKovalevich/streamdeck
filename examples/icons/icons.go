@@ -3,21 +3,17 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"image"
-	"log"
-	"os"
-	"os/signal"
-
 	sdeck "github.com/AKovalevich/streamdeck"
 	"github.com/gobuffalo/packr/v2"
+	"image"
+	"log"
 )
 
 // This example loads icons and places them on buttons in the first row
 // of the Stream Deck. The lightbulb icon on button 0 can be toggled.
 
 func main() {
-
-	sd, err := sdeck.NewStreamDeck()
+	sd, err := sdeck.NewStreamDeck(nil)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -116,8 +112,6 @@ func main() {
 
 	sd.SetBtnEventCb(onPressedCb)
 
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-
-	<-c
+	stop := make(chan bool)
+	sd.Serve(stop)
 }

@@ -17,8 +17,7 @@ import (
 // the panel and if necessary cropped to the center.
 
 func main() {
-
-	sd, err := sdeck.NewStreamDeck()
+	sd, err := sdeck.NewStreamDeck(nil)
 	if err != nil {
 		log.Panic(err)
 	}

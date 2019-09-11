@@ -3,17 +3,15 @@ package main
 import (
 	"image/color"
 	"log"
-	"os"
-	"os/signal"
 	"strconv"
 
 	sdeck "github.com/AKovalevich/streamdeck"
 	"github.com/AKovalevich/streamdeck/label"
-	ledbutton "github.com/AKovalevich/streamdeck/ledbutton"
+	"github.com/AKovalevich/streamdeck/ledbutton"
 )
 
 func main() {
-	sd, err := sdeck.NewStreamDeck()
+	sd, err := sdeck.NewStreamDeck(nil)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -33,11 +31,8 @@ func main() {
 
 	sd.SetBtnEventCb(cb)
 
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-
-	<-c
-
+	stop := make(chan bool)
+	sd.Serve(stop)
 }
 
 type stackPage struct {

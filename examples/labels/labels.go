@@ -2,16 +2,12 @@ package main
 
 import (
 	"fmt"
+	sdeck "github.com/AKovalevich/streamdeck"
+	"github.com/AKovalevich/streamdeck/label"
 	"image"
 	"image/color"
 	"log"
-	"os"
-	"os/signal"
 	"strconv"
-	"time"
-
-	sdeck "github.com/AKovalevich/streamdeck"
-	label "github.com/AKovalevich/streamdeck/label"
 )
 
 // This example will instanciate 15 labels on the streamdeck. Each Label
@@ -19,8 +15,7 @@ import (
 // pressed it will be colored blue until it is released.
 
 func main() {
-
-	sd, err := sdeck.NewStreamDeck()
+	sd, err := sdeck.NewStreamDeck(nil)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -50,22 +45,6 @@ func main() {
 
 	sd.SetBtnEventCb(handleBtnEvents)
 
-	ticker := time.NewTicker(time.Millisecond * 50)
-
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-
-	counter := 0
-
-	for {
-		select {
-		case <-c:
-			return
-		case <-ticker.C:
-			for i := 0; i < 15; i++ {
-				labels[i].SetText(fmt.Sprintf("%03d", counter))
-			}
-			counter++
-		}
-	}
+	stop := make(chan bool)
+	sd.Serve(stop)
 }
