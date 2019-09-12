@@ -81,10 +81,11 @@ type ReadErrorCb func(err error)
 // StreamDeck is the object representing the Elgato Stream Deck.
 type StreamDeck struct {
 	sync.Mutex
-	device     *USBDevice
-	btnEventCb BtnEvent
-	btnState   []BtnState
-	log        Logger
+	device            *USBDevice
+	btnEventCb        BtnEvent
+	btnState          []BtnState
+	log               Logger
+	onConnectCallback func()
 }
 
 // TextButton holds the lines to be written to a button and the desired
@@ -160,61 +161,47 @@ func NewStreamDeck(logger Logger, serial ...string) (*StreamDeck, error) {
 	return sd, nil
 }
 
-func (sd *StreamDeck) Serve(stop chan bool) {
-	for {
-		select {
-		case <-stop:
-			return
-		default:
+func (sd *StreamDeck) OnConnect(callback func()) {
+	sd.onConnectCallback = callback
+}
+
+func (sd *StreamDeck) Serve(stop chan bool) error {
+	messageChan := make(chan []byte)
+	errorChan := make(chan error)
+	go func() {
+		for {
 			if !sd.device.IsConnected() {
 				if err := sd.device.Connect(); err != nil {
 					sd.log.Warn(err.Error())
-					time.Sleep(DefaultReconnectionTime)
-					continue
+					errorChan <- err
+					return
+				} else {
+					if sd.onConnectCallback != nil {
+						sd.onConnectCallback()
+					}
 				}
 			}
 
-			if err := sd.read(stop); err != nil {
-				sd.log.Error(err.Error())
-				continue
-			}
-		}
-	}
-}
-
-func (sd *StreamDeck) IsConnected() bool {
-	return sd.device.IsConnected()
-}
-
-// SetBtnEventCb sets the BtnEvent callback which get's executed whenever
-// a Button event (pressed/released) occures.
-func (sd *StreamDeck) SetBtnEventCb(ev BtnEvent) {
-	sd.Lock()
-	defer sd.Unlock()
-	sd.btnEventCb = ev
-}
-
-// Read will listen in a for loop for incoming messages from the Stream Deck.
-// It is typcially executed in a dedicated go routine.
-func (sd *StreamDeck) read(stop chan bool) error {
-	for {
-		select {
-		case <-stop:
-			err := sd.Close()
-			if err != nil {
-				return err
-			}
-			return nil
-		default:
 			data := make([]byte, OutEndpointBufferSize)
 			_, err := sd.device.read(data)
 			if err != nil {
-				print(err.Error(), "\n")
-				return err
+				errorChan <- err
+				return
+			} else {
+				messageChan <- data
 			}
+		}
+	}()
+
+	for {
+		select {
+		case <-stop:
+			return nil
+		case err := <-errorChan:
+			return err
+		case data := <-messageChan:
 			// strip off the first and end byte
 			data = data[1 : len(data)-1]
-
 			sd.Lock()
 			// we have to iterate over all 15 buttons and check if the state
 			// has changed. If it has changed, execute the callback.
@@ -232,10 +219,23 @@ func (sd *StreamDeck) read(stop chan bool) error {
 	}
 }
 
+func (sd *StreamDeck) IsConnected() bool {
+	if sd.device != nil {
+		return sd.device.IsConnected()
+	}
+	return false
+}
+
+// SetBtnEventCb sets the BtnEvent callback which get's executed whenever
+// a Button event (pressed/released) occures.
+func (sd *StreamDeck) SetBtnEventCb(ev BtnEvent) {
+	sd.Lock()
+	defer sd.Unlock()
+	sd.btnEventCb = ev
+}
+
 // Close the connection to the Elgato Stream Deck
 func (sd *StreamDeck) Close() error {
-	sd.Lock()
-	sd.Unlock()
 	sd.ClearAllBtns()
 	return sd.device.Close()
 }

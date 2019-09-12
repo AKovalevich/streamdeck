@@ -111,9 +111,14 @@ func (usbDevice *USBDevice) Connect() error {
 		defer config.Close()
 
 		// Iterate through available interfaces for this configuration
+		if len(config.Desc.Interfaces) <= 0 {
+			return errors.New("no available interfaces for device")
+		}
 		for _, desc := range config.Desc.Interfaces {
-			intf, _ := config.Interface(desc.Number, 0)
-
+			intf, err := config.Interface(desc.Number, 0)
+			if err != nil {
+				return err
+			}
 			// Iterate through endpoints available for this interface.
 			for _, endpointDesc := range intf.Setting.Endpoints {
 				// We only want to read, so we're looking for IN endpoints.
